@@ -5,7 +5,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "upload-arxiv": "ts-node scripts/upload_arxiv.ts"
+    "upload-arxiv": "ts-node scripts/upload_arxiv.ts",
+    "test-embedding": "ts-node scripts/test_embedding.ts"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.1",

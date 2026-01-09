@@ -32,9 +32,9 @@ interface DatabaseRow {
   title: string | null;
   abstract: string | null;
   authors: string | null;
-  'publish-date': string | null;
+  publish_date: string | null;
   doi: string | null;
-  'journal-ref': string | null;
+  journal_ref: string | null;
   embedding: number[] | null;
 }
 
@@ -49,10 +49,13 @@ const openai = new OpenAI({
 });
 
 
-let numberOfPapersToUpload = 1000;
+// From the arXiv dataset, the number of papers to upload up to from the tail
+let numberOfPapersToUpload = 100000;
+
+// From Supabase, the number of papers already uploaded
+let numberOfPapersAlreadyUploaded = 10000;
 
 // Call the python script to filter the papers
-
 execSync(`python3 scripts/extract_arxiv.py ${numberOfPapersToUpload} data/arxiv-output-filtered.json data/arxiv-output.json`, { stdio: 'inherit' });
 
 // Read your JSON file
@@ -99,9 +102,9 @@ async function transformData(paper: ArxivPaper): Promise<DatabaseRow> {
     title: title || null,
     abstract: abstract || null,
     authors: paper.authors || null,
-    'publish-date': paper.update_date || null,
+    publish_date: paper.update_date || null,
     doi: paper.doi || null,
-    'journal-ref': paper['journal-ref'] || null,
+    journal_ref: paper['journal-ref'] || null,
     embedding: embedding,
   };
 }
@@ -109,7 +112,7 @@ async function transformData(paper: ArxivPaper): Promise<DatabaseRow> {
 // Upload in batches
 async function uploadToSupabase(
   data: ArxivPaper[], 
-  batchSize: number = 10
+  batchSize: number = 100
 ): Promise<void> {
   const batches: ArxivPaper[][] = [];
 
@@ -124,7 +127,7 @@ async function uploadToSupabase(
   numberOfPapersToUpload = filteredData.length;
 
   // Split into batches
-  for (let i = 0; i < numberOfPapersToUpload; i += batchSize) {
+  for (let i = numberOfPapersAlreadyUploaded; i < numberOfPapersToUpload; i += batchSize) {
     batches.push(filteredData.slice(i, i + batchSize));
   }
 
@@ -145,11 +148,6 @@ async function uploadToSupabase(
       if ((j + 1) % 10 === 0) {
         console.log(`  Processed ${j + 1}/${batches[i].length} papers in batch ${i + 1}`);
       }
-
-      // Small delay between embedding requests to avoid rate limits
-      if (j < batches[i].length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
     }
 
     const { data: result, error } = await supabase
@@ -163,9 +161,6 @@ async function uploadToSupabase(
       successCount += batch.length;
       console.log(`Batch ${i + 1}/${batches.length} uploaded successfully`);
     }
-
-    // Small delay between batches
-    await new Promise(resolve => setTimeout(resolve, 100));
   }
 
   console.log(`\nUpload complete!`);
