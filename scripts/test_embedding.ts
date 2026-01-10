@@ -3,9 +3,9 @@ import OpenAI from 'openai';
 import dotenv from 'dotenv';
 
 // Load environment variables from .env.local
-dotenv.config({ path: '.env', override: true });
+dotenv.config({ path: '.env.local', override: true });
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Your abstract to search for

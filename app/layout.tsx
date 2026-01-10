@@ -11,7 +11,7 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Reef: AI for Researchers | Moby Labs",
+  title: "Reef: Research Assistant | Moby Labs",
   description: "We do Whale Tracking",
 };
 
