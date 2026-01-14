@@ -2,8 +2,6 @@ reef: an abstract search tool
 
 # next steps
 make it so that it reads abstracts from arxiv api
-make an api
-* simple abstract search tool
 make a mcp tool
 
 # vision
