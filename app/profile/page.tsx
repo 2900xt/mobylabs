@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { User, Mail, Plus, Coins, Loader2 } from "lucide-react";
+import { Mail, Plus, Coins, Loader2, ChevronDown } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -41,12 +41,10 @@ export default function ProfilePage() {
   }, [user]);
 
   useEffect(() => {
-    // Check for success/cancel query params
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('session_id');
 
     if (params.get('success') && sessionId) {
-      // Verify the session and add credits
       verifyAndAddCredits(sessionId);
     } else if (params.get('canceled')) {
       setError('Payment was cancelled');
@@ -66,22 +64,17 @@ export default function ProfilePage() {
 
       if (response.ok && data.success) {
         setSuccess(`Payment successful! ${data.added} credits have been added.`);
-        // Refresh profile to show updated credits
         fetchProfile();
       } else {
-        // Payment might have already been processed by webhook
         setSuccess('Payment successful! Your credits have been added.');
         fetchProfile();
       }
     } catch (err) {
       console.error('Verification error:', err);
-      // Still show success since payment went through
       setSuccess('Payment successful! Your credits should be updated shortly.');
       fetchProfile();
     } finally {
-      // Clear the query params
       window.history.replaceState({}, '', '/profile');
-      // Clear success message after 5 seconds
       setTimeout(() => setSuccess(null), 5000);
     }
   };
@@ -110,9 +103,9 @@ export default function ProfilePage() {
   };
 
   const getCreditsColor = (credits: number) => {
-    if (credits > 50) return "text-green-400";
-    if (credits > 20) return "text-yellow-400";
-    return "text-red-400";
+    if (credits > 50) return "text-emerald-400";
+    if (credits > 20) return "text-amber-400";
+    return "text-rose-400";
   };
 
   const handleBuyCredits = async (packageType: 'SMALL' | 'MEDIUM' | 'LARGE') => {
@@ -122,9 +115,7 @@ export default function ProfilePage() {
 
       const response = await fetch('/api/checkout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ packageType }),
       });
 
@@ -134,7 +125,6 @@ export default function ProfilePage() {
         throw new Error(data.error || 'Failed to create checkout session');
       }
 
-      // Redirect to Stripe Checkout using the URL
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -150,8 +140,8 @@ export default function ProfilePage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center pt-16">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-cyan-500" />
       </div>
     );
   }
@@ -162,38 +152,58 @@ export default function ProfilePage() {
   const avatarUrl = metadata.avatar_url || metadata.picture;
 
   return (
-    <div className="min-h-screen bg-slate-950 pt-20 pb-12 px-4">
+    <div className="min-h-screen bg-slate-950 pt-16 px-4">
       {/* Background effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[120px]" />
+        <div className="absolute top-1/4 left-1/3 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 right-1/3 w-[400px] h-[400px] bg-cyan-500/5 rounded-full blur-[120px]" />
       </div>
 
-      <div className="relative z-10 max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-white mb-6">Profile</h1>
+      <div className="relative z-10 max-w-xl mx-auto py-6">
+        {/* Header with avatar */}
+        <div className="flex items-center gap-3 mb-5">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="Profile"
+              className="w-10 h-10 rounded-full border border-cyan-500/30"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold">
+              {(profile?.full_name || user.email)?.[0]?.toUpperCase() || "U"}
+            </div>
+          )}
+          <div>
+            <h1 className="text-lg font-semibold text-white">{profile?.full_name || 'Profile'}</h1>
+            <p className="text-xs text-white/40 flex items-center gap-1">
+              <Mail className="w-3 h-3" />
+              {user.email}
+            </p>
+          </div>
+        </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+          <div className="mb-3 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-xs">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-sm">
+          <div className="mb-3 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded text-emerald-400 text-xs">
             {success}
           </div>
         )}
 
         {/* Credits Card */}
-        <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-xl p-5 mb-5">
+        <div className="bg-slate-900/60 border border-white/5 rounded p-4 mb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-cyan-500/20 rounded-lg">
-                <Coins className="w-5 h-5 text-cyan-400" />
+              <div className="p-2 bg-cyan-500/10 rounded">
+                <Coins className="w-4 h-4 text-cyan-400" />
               </div>
               <div>
-                <p className="text-sm text-white/60">Credits Remaining</p>
-                <p className={`text-2xl font-bold ${getCreditsColor(profile?.credits_remaining || 0)}`}>
+                <p className="text-[10px] text-white/40 uppercase tracking-wider font-medium">Credits</p>
+                <p className={`text-xl font-bold ${getCreditsColor(profile?.credits_remaining || 0)}`}>
                   {profile?.credits_remaining ?? 0}
                 </p>
               </div>
@@ -201,146 +211,88 @@ export default function ProfilePage() {
             <button
               onClick={() => setShowPricing(!showPricing)}
               disabled={checkoutLoading}
-              className="flex items-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-cyan-400 text-sm font-medium rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/15 hover:bg-cyan-500/25 disabled:opacity-50 text-cyan-400 text-xs font-medium rounded transition-colors"
             >
               {checkoutLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Processing...
-                </>
+                <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
                 <>
-                  <Plus className="w-4 h-4" />
-                  Buy Credits
+                  <Plus className="w-3 h-3" />
+                  Buy
+                  <ChevronDown className={`w-3 h-3 transition-transform ${showPricing ? 'rotate-180' : ''}`} />
                 </>
               )}
             </button>
           </div>
-          <p className="text-xs text-white/40 mt-3">Each search uses 1 credit.</p>
         </div>
 
         {/* Pricing Options */}
         {showPricing && (
-          <div className="bg-slate-900/50 border border-white/10 rounded-xl p-5 mb-5">
-            <h2 className="text-lg font-semibold text-white mb-4">Choose a Package</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Small Package */}
-              <div className="bg-slate-800/50 border border-white/10 rounded-lg p-4 hover:border-cyan-500/30 transition-colors">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-white mb-2">Starter</h3>
-                  <div className="mb-4">
-                    <span className="text-3xl font-bold text-cyan-400">$5</span>
-                  </div>
-                  <p className="text-white/60 text-sm mb-4">
-                    <span className="text-2xl font-bold text-white">10</span> credits
-                  </p>
-                  <p className="text-white/40 text-xs mb-4">Perfect for trying out</p>
-                  <button
-                    onClick={() => handleBuyCredits('SMALL')}
-                    disabled={checkoutLoading}
-                    className="w-full px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 disabled:opacity-50 text-cyan-400 text-sm font-medium rounded-lg transition-colors"
-                  >
-                    Select
-                  </button>
-                </div>
-              </div>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {/* Starter */}
+            <button
+              onClick={() => handleBuyCredits('SMALL')}
+              disabled={checkoutLoading}
+              className="bg-slate-900/60 border border-white/5 hover:border-cyan-500/30 rounded p-3 text-center transition-colors disabled:opacity-50"
+            >
+              <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Starter</p>
+              <p className="text-lg font-bold text-cyan-400">$5</p>
+              <p className="text-xs text-white/60">10 credits</p>
+            </button>
 
-              {/* Medium Package */}
-              <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-2 border-cyan-500/40 rounded-lg p-4 relative">
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-cyan-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                    POPULAR
-                  </span>
-                </div>
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-white mb-2">Pro</h3>
-                  <div className="mb-4">
-                    <span className="text-3xl font-bold text-cyan-400">$20</span>
-                  </div>
-                  <p className="text-white/60 text-sm mb-4">
-                    <span className="text-2xl font-bold text-white">50</span> credits
-                  </p>
-                  <p className="text-white/40 text-xs mb-4">Best value - $0.40/credit</p>
-                  <button
-                    onClick={() => handleBuyCredits('MEDIUM')}
-                    disabled={checkoutLoading}
-                    className="w-full px-4 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
-                  >
-                    Select
-                  </button>
-                </div>
-              </div>
+            {/* Pro - Popular */}
+            <button
+              onClick={() => handleBuyCredits('MEDIUM')}
+              disabled={checkoutLoading}
+              className="relative bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 hover:border-cyan-500/50 rounded p-3 text-center transition-colors disabled:opacity-50"
+            >
+              <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-cyan-500 text-[9px] text-white font-bold px-2 py-0.5 rounded-full">
+                BEST
+              </span>
+              <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Pro</p>
+              <p className="text-lg font-bold text-cyan-400">$20</p>
+              <p className="text-xs text-white/60">50 credits</p>
+            </button>
 
-              {/* Large Package */}
-              <div className="bg-slate-800/50 border border-white/10 rounded-lg p-4 hover:border-cyan-500/30 transition-colors">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-white mb-2">Enterprise</h3>
-                  <div className="mb-4">
-                    <span className="text-3xl font-bold text-cyan-400">$35</span>
-                  </div>
-                  <p className="text-white/60 text-sm mb-4">
-                    <span className="text-2xl font-bold text-white">100</span> credits
-                  </p>
-                  <p className="text-white/40 text-xs mb-4">For power users - $0.35/credit</p>
-                  <button
-                    onClick={() => handleBuyCredits('LARGE')}
-                    disabled={checkoutLoading}
-                    className="w-full px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 disabled:opacity-50 text-cyan-400 text-sm font-medium rounded-lg transition-colors"
-                  >
-                    Select
-                  </button>
-                </div>
-              </div>
-            </div>
+            {/* Enterprise */}
+            <button
+              onClick={() => handleBuyCredits('LARGE')}
+              disabled={checkoutLoading}
+              className="bg-slate-900/60 border border-white/5 hover:border-cyan-500/30 rounded p-3 text-center transition-colors disabled:opacity-50"
+            >
+              <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Power</p>
+              <p className="text-lg font-bold text-cyan-400">$35</p>
+              <p className="text-xs text-white/60">100 credits</p>
+            </button>
           </div>
         )}
 
-        {/* Profile Section */}
-        <div className="bg-slate-900/50 border border-white/10 rounded-xl p-5 mb-5">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <User className="w-4 h-4 text-cyan-400" />
-            Profile Information
-          </h2>
-
-          {/* Avatar */}
-          <div className="flex items-center gap-4 mb-5">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Profile"
-                className="w-14 h-14 rounded-full border-2 border-cyan-400/50"
-              />
-            ) : (
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-lg font-bold">
-                {(profile?.full_name || user.email)?.[0]?.toUpperCase() || "U"}
+        {/* Account Info */}
+        <div className="bg-slate-900/60 border border-white/5 rounded p-4">
+          <p className="text-[10px] text-white/40 uppercase tracking-wider font-medium mb-2">Account</p>
+          <div className="space-y-2 text-xs">
+            {profile?.full_name && (
+              <div className="flex justify-between">
+                <span className="text-white/40">Name</span>
+                <span className="text-white/70">{profile.full_name}</span>
               </div>
             )}
-            <div className="flex-1">
-              <p className="text-sm text-white/50">Signed in with Google</p>
+            <div className="flex justify-between">
+              <span className="text-white/40">Provider</span>
+              <span className="text-white/70">Google</span>
             </div>
-          </div>
-
-          {/* Full Name (read-only) */}
-          {profile?.full_name && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-white/70 mb-1.5">
-                Full Name
-              </label>
-              <div className="px-3 py-2 bg-slate-800/30 border border-white/5 rounded-lg text-white/50 text-sm">
-                {profile.full_name}
+            {profile?.created_at && (
+              <div className="flex justify-between">
+                <span className="text-white/40">Joined</span>
+                <span className="text-white/70">
+                  {new Date(profile.created_at).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
               </div>
-            </div>
-          )}
-
-          {/* Email (read-only) */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-white/70 mb-1.5 flex items-center gap-1">
-              <Mail className="w-3 h-3" />
-              Email
-            </label>
-            <div className="px-3 py-2 bg-slate-800/30 border border-white/5 rounded-lg text-white/50 text-sm">
-              {user.email}
-            </div>
+            )}
           </div>
         </div>
       </div>
