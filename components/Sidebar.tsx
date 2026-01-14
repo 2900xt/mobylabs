@@ -167,7 +167,7 @@ export default function Sidebar() {
 
       {/* Search History */}
       <div className="flex-1 overflow-y-auto px-3">
-        <div className="text-xs font-medium text-white/40 px-3 py-2">Searches</div>
+        <div className="text-xs font-medium text-white/40 px-3 py-2">Recent Searches</div>
         {searchHistory.length === 0 ? (
           <p className="text-xs text-white/30 px-3 py-2">No searches yet</p>
         ) : (
