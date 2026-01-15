@@ -46,10 +46,10 @@ export default function SearchResultsPage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user && searchId) {
+    if (!authLoading && user && searchId) {
       fetchSearchResults();
     }
-  }, [user, searchId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, authLoading, searchId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {

@@ -43,10 +43,6 @@ export default function SearchBar({
   };
 
   const handleSearch = () => {
-    if (wordCount < minWords && !extractedText) {
-      setShowWordCountError(true);
-      return;
-    }
     setShowWordCountError(false);
     onSearch();
   };
