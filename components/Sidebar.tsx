@@ -4,13 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { MessageSquare, User, LogOut, Code2 } from "lucide-react";
+import { MessageSquare, User, LogOut, Code2, Search, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 
 interface SearchHistoryItem {
   id: string;
   title: string;
+  abstract?: string;
   created_at: string;
 }
 
@@ -21,6 +22,9 @@ export default function Sidebar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [allSearches, setAllSearches] = useState<SearchHistoryItem[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
@@ -47,6 +51,13 @@ export default function Sidebar() {
       fetchSearchHistory();
     }
   }, [user, pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch all searches when user starts searching
+  useEffect(() => {
+    if (isSearching && allSearches.length === 0) {
+      fetchAllSearches();
+    }
+  }, [isSearching]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchCredits = async () => {
     if (!user) return;
@@ -90,7 +101,7 @@ export default function Sidebar() {
     try {
       const { data, error } = await supabase
         .from("reef_searches")
-        .select("id, title, created_at")
+        .select("id, title, abstract, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(10);
@@ -105,6 +116,36 @@ export default function Sidebar() {
       console.error("Error fetching search history:", err);
     }
   };
+
+  const fetchAllSearches = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("reef_searches")
+        .select("id, title, abstract, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching all searches:", error);
+        return;
+      }
+
+      setAllSearches(data || []);
+    } catch (err) {
+      console.error("Error fetching all searches:", err);
+    }
+  };
+
+  // Filter searches based on query
+  const filteredSearches = searchQuery.trim()
+    ? allSearches.filter(
+        (item) =>
+          item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.abstract?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : searchHistory;
 
   const handleSignOut = async () => {
     await signOut();
@@ -165,14 +206,44 @@ export default function Sidebar() {
         </Link>
       </div>
 
+      {/* Search Input */}
+      <div className="px-3 pb-2">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+          <input
+            type="text"
+            placeholder="Search previous queries..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setIsSearching(true)}
+            className="w-full pl-9 pr-8 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white/90 placeholder:text-white/40 focus:outline-none focus:border-cyan-500/50 focus:bg-white/[0.07] transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setIsSearching(false);
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded transition-colors"
+            >
+              <X className="w-3.5 h-3.5 text-white/40 hover:text-white/70" />
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Search History */}
       <div className="flex-1 overflow-y-auto px-3">
-        <div className="text-xs font-medium text-white/40 px-3 py-2">Recent Searches</div>
-        {searchHistory.length === 0 ? (
-          <p className="text-xs text-white/30 px-3 py-2">No searches yet</p>
+        <div className="text-xs font-medium text-white/40 px-3 py-2">
+          {searchQuery.trim() ? `Results for "${searchQuery}"` : "Recent Searches"}
+        </div>
+        {filteredSearches.length === 0 ? (
+          <p className="text-xs text-white/30 px-3 py-2">
+            {searchQuery.trim() ? "No matching searches found" : "No searches yet"}
+          </p>
         ) : (
           <div className="space-y-0.5">
-            {searchHistory.map((item) => {
+            {filteredSearches.map((item) => {
               const isActive = currentSearchId === item.id;
               return (
                 <Link

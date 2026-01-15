@@ -57,6 +57,14 @@ export default function DocsPage() {
           </p>
         </div>
 
+        {/* Life Cycle of 3 days */}
+        <div className="bg-slate-900/60 border border-white/5 rounded p-3 mb-3">
+          <p className="text-[10px] text-white/40 uppercase tracking-wider font-medium mb-2">Search Life Cycle</p>
+          <p className="text-xs text-white/60 leading-relaxed">
+            All requests and stored searches have a life cycle of 3 days. After this period, searches and their associated data will be automatically deleted from our servers to ensure data privacy and optimal performance.
+          </p>
+        </div>
+
         {/* POST /api/papers/new */}
         <div className="bg-slate-900/60 border border-white/5 rounded mb-3 overflow-hidden">
           <button

@@ -40,7 +40,7 @@ function ScrollingColumn({ snippets, reverse }: { snippets: string[]; reverse?: 
     return () => clearInterval(interval);
   }, []);
 
-  const translateY = reverse ? offset % 400 : -(offset % 400);
+  const translateY = reverse ? (offset % 400) - 400 : -(offset % 400);
 
   return (
     <div
@@ -61,15 +61,15 @@ function ScrollingColumn({ snippets, reverse }: { snippets: string[]; reverse?: 
 
 export default function ScrollingAbstractsBackground() {
   // Split snippets into columns
-  const col1 = paperSnippets.slice(0, 8);
-  const col2 = paperSnippets.slice(8, 16);
-  const col3 = paperSnippets.slice(16, 24);
-  const col4 = [...paperSnippets.slice(0, 8)];
+  const col1 = paperSnippets.slice(0, 16);
+  const col2 = paperSnippets.slice(8, 24);
+  const col3 = paperSnippets.slice(16, 24).concat(paperSnippets.slice(0, 8));
+  const col4 = [...paperSnippets.slice(0, 16)].reverse();
 
   return (
     <>
       {/* Scrolling abstracts background */}
-      <div className="absolute inset-0 flex gap-3 opacity-70 pointer-events-none px-2">
+      <div className="absolute inset-0 flex gap-3 opacity-100 pointer-events-none px-2">
         <div className="flex-1 overflow-hidden">
           <ScrollingColumn snippets={col1} />
         </div>
