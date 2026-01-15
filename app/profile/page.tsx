@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Mail, Plus, Coins, Loader2, ChevronDown, Copy, Check, Key, Eye, EyeOff } from "lucide-react";
 
+import { CREDIT_PACKAGES } from "@/lib/stripe/packages";
+
 interface Profile {
   id: string;
   email: string | null;
@@ -238,8 +240,8 @@ export default function ProfilePage() {
               className="bg-slate-900/60 border border-white/5 hover:border-cyan-500/30 rounded p-3 text-center transition-colors disabled:opacity-50"
             >
               <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Starter</p>
-              <p className="text-lg font-bold text-cyan-400">$5</p>
-              <p className="text-xs text-white/60">10 credits</p>
+              <p className="text-lg font-bold text-cyan-400">${CREDIT_PACKAGES.SMALL.price / 100}</p>
+              <p className="text-xs text-white/60">{CREDIT_PACKAGES.SMALL.credits} credits</p>
             </button>
 
             {/* Pro - Popular */}
@@ -252,8 +254,8 @@ export default function ProfilePage() {
                 BEST
               </span>
               <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Pro</p>
-              <p className="text-lg font-bold text-cyan-400">$20</p>
-              <p className="text-xs text-white/60">50 credits</p>
+              <p className="text-lg font-bold text-cyan-400">${CREDIT_PACKAGES.MEDIUM.price / 100}</p>
+              <p className="text-xs text-white/60">{CREDIT_PACKAGES.MEDIUM.credits} credits</p>
             </button>
 
             {/* Enterprise */}
@@ -263,8 +265,8 @@ export default function ProfilePage() {
               className="bg-slate-900/60 border border-white/5 hover:border-cyan-500/30 rounded p-3 text-center transition-colors disabled:opacity-50"
             >
               <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Power</p>
-              <p className="text-lg font-bold text-cyan-400">$35</p>
-              <p className="text-xs text-white/60">100 credits</p>
+              <p className="text-lg font-bold text-cyan-400">${CREDIT_PACKAGES.LARGE.price / 100}</p>
+              <p className="text-xs text-white/60">{CREDIT_PACKAGES.LARGE.credits} credits</p>
             </button>
           </div>
         )}
