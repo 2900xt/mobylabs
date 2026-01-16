@@ -91,10 +91,10 @@ export default function LoginPage() {
           {/* Logo */}
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">
-              Reef, by Moby Labs
+              Moby Labs
             </h1>
             <p className="text-white/50 text-sm mt-1">
-              AI-powered abstract searcher
+              An AI Research Pipeline
             </p>
           </div>
 
