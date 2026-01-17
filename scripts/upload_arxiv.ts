@@ -9,7 +9,7 @@ dotenv.config({ path: '.env.local', override: true });
 
 // Type definitions
 interface ArxivPaper {
-  id: string; 
+  id: string;
   submitter: string;
   authors: string;
   title: string;
@@ -29,6 +29,7 @@ interface ArxivPaper {
 }
 
 interface DatabaseRow {
+  arxiv_id: string | null;
   title: string | null;
   abstract: string | null;
   authors: string | null;
@@ -40,7 +41,7 @@ interface DatabaseRow {
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Initialize OpenAI client
@@ -50,7 +51,7 @@ const openai = new OpenAI({
 
 
 // From the arXiv dataset, the number of papers to upload up to from the tail
-let numberOfPapersToUpload = 100;
+let numberOfPapersToUpload = 1000;
 
 // From Supabase, the number of papers already uploaded
 let numberOfPapersAlreadyUploaded = 0;
@@ -99,6 +100,7 @@ async function transformData(paper: ArxivPaper): Promise<DatabaseRow> {
   const embedding = await generateEmbedding(textForEmbedding);
 
   return {
+    arxiv_id: paper.id || null,
     title: title || null,
     abstract: abstract || null,
     authors: paper.authors || null,
