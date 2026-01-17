@@ -84,7 +84,7 @@ export default function SearchResultsPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/search/${searchId}`, {
+      const response = await fetch(`/api/reef/search/${searchId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

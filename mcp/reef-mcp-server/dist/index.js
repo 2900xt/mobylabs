@@ -5,7 +5,7 @@ import { z } from "zod";
 const REEF_API_BASE_URL = process.env.REEF_API_URL || "https://reef.mobylabs.org";
 const REEF_USER_ID = process.env.REEF_USER_ID;
 async function createSearch(userId, abstract) {
-    const response = await fetch(`${REEF_API_BASE_URL}/api/papers/new`, {
+    const response = await fetch(`${REEF_API_BASE_URL}/api/reef/papers/new`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -15,7 +15,7 @@ async function createSearch(userId, abstract) {
     return response.json();
 }
 async function getSearchResults(userId, searchId) {
-    const response = await fetch(`${REEF_API_BASE_URL}/api/search/${searchId}`, {
+    const response = await fetch(`${REEF_API_BASE_URL}/api/reef/search/${searchId}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

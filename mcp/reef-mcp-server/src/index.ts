@@ -37,7 +37,7 @@ interface ErrorResponse {
 }
 
 async function createSearch(userId: string, abstract: string): Promise<SearchResponse | ErrorResponse> {
-  const response = await fetch(`${REEF_API_BASE_URL}/api/papers/new`, {
+  const response = await fetch(`${REEF_API_BASE_URL}/api/reef/papers/new`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -49,7 +49,7 @@ async function createSearch(userId: string, abstract: string): Promise<SearchRes
 }
 
 async function getSearchResults(userId: string, searchId: string): Promise<SearchResultResponse | ErrorResponse> {
-  const response = await fetch(`${REEF_API_BASE_URL}/api/search/${searchId}`, {
+  const response = await fetch(`${REEF_API_BASE_URL}/api/reef/search/${searchId}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

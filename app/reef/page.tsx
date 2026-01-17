@@ -32,7 +32,7 @@ export default function Home() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/parse-document", {
+      const response = await fetch("/api/reef/parse-document", {
         method: "POST",
         body: formData,
       });
@@ -72,7 +72,7 @@ export default function Home() {
         queryText = searchQuery.trim();
       }
 
-      const response = await fetch("/api/papers/new", {
+      const response = await fetch("/api/reef/papers/new", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
