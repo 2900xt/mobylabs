@@ -4,8 +4,7 @@ import dotenv from 'dotenv';
 import { execSync } from 'child_process';
 import OpenAI from 'openai';
 
-// Load environment variables from .env.local
-dotenv.config({ path: '.env.local', override: true });
+dotenv.config({ path: '.env', override: true });
 
 // Type definitions
 interface ArxivPaper {
@@ -40,9 +39,7 @@ interface DatabaseRow {
 }
 
 // Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(process.env.PAPER_SUPABASE_URL!, process.env.PAPER_SUPABASE_SERVICE_ROLE_KEY!);
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -51,7 +48,7 @@ const openai = new OpenAI({
 
 
 // From the arXiv dataset, the number of papers to upload up to from the tail
-let numberOfPapersToUpload = 1000;
+let numberOfPapersToUpload = 10;
 
 // From Supabase, the number of papers already uploaded
 let numberOfPapersAlreadyUploaded = 0;

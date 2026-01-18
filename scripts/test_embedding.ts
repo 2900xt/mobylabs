@@ -3,13 +3,13 @@ import OpenAI from 'openai';
 import dotenv from 'dotenv';
 
 // Load environment variables from .env.local
-dotenv.config({ path: '.env.local', override: true });
+dotenv.config({ path: '.env', override: true });
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!);
+const supabase = createClient(process.env.PAPER_SUPABASE_URL!, process.env.PAPER_SUPABASE_SERVICE_ROLE_KEY!);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Your abstract to search for
-const myAbstract = ``;
+const myAbstract = `ribidi skizzler`;
 
 // Generate embedding
 const embeddingResponse = await openai.embeddings.create({

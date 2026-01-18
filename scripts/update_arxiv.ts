@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import { execSync } from 'child_process';
 
 // Load environment variables from .env.local
-dotenv.config({ path: '.env.local', override: true });
+dotenv.config({ path: '.env', override: true });
 
 // Type definitions
 interface ArxivPaper {
@@ -14,9 +14,7 @@ interface ArxivPaper {
 }
 
 // Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(process.env.PAPER_SUPABASE_URL!, process.env.PAPER_SUPABASE_SERVICE_ROLE_KEY!);
 
 // Number of papers to process from the arXiv dataset
 const numberOfPapersToProcess = 1000;
