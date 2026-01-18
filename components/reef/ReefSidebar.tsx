@@ -196,7 +196,7 @@ export default function Sidebar() {
       {/* New Search Button */}
       <div className="px-3 pb-2">
         <Link
-          href="/"
+          href="/reef"
           className="group flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-white/5 transition-colors"
         >
           <div className="w-6 h-6 rounded-full bg-cyan-500/10 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">

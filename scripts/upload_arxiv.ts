@@ -48,7 +48,7 @@ const openai = new OpenAI({
 
 
 // From the arXiv dataset, the number of papers to upload up to from the tail
-let numberOfPapersToUpload = 10;
+let numberOfPapersToUpload = 100000;
 
 // From Supabase, the number of papers already uploaded
 let numberOfPapersAlreadyUploaded = 0;
@@ -121,7 +121,7 @@ async function uploadToSupabase(
   data = data.slice(0, numberOfPapersToUpload);
 
   // Then filter out papers with any null required fields
-  const filteredData = data.filter(paper => paper.title && paper.abstract && paper.authors && paper.update_date && paper.doi && paper['journal-ref']);
+  const filteredData = data.filter(paper => paper.title && paper.abstract && paper.id);
   
   numberOfPapersToUpload = filteredData.length;
 
