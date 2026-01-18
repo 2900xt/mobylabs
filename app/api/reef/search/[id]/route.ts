@@ -7,6 +7,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+
+const paperSupabase = createClient(
+  process.env.PAPER_SUPABASE_URL!,
+  process.env.PAPER_SUPABASE_SERVICE_ROLE_KEY!
+);
+
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -88,7 +95,7 @@ export async function POST(
     }
 
     // Fetch similar papers using the embedding
-    const { data: papers, error: papersError } = await supabase.rpc('match_papers', {
+    const { data: papers, error: papersError } = await paperSupabase.rpc('match_papers', {
       query_embedding: search.embedding,
       match_threshold: 0.0,
       match_count: 10,

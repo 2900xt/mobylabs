@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { FileText, Calendar, Users, ExternalLink, Loader2, ChevronDown } from "lucide-react";
 
 interface Paper {
-  id: string;
+  arxiv_id: string;
   title: string;
   abstract: string;
   authors: string;
@@ -205,7 +205,7 @@ export default function SearchResultsPage() {
                 <div className="space-y-1.5">
                   {results.map((paper, index) => (
                     <div
-                      key={paper.id || index}
+                      key={paper.arxiv_id || index}
                       onMouseEnter={() => setHoveredPaper(paper)}
                       className="group relative bg-slate-800/40 border border-white/5 rounded p-2.5 hover:border-cyan-500/40 hover:bg-slate-800/70 hover:shadow-lg hover:shadow-cyan-500/5 transition-all duration-200 cursor-pointer"
                     >
@@ -338,6 +338,24 @@ export default function SearchResultsPage() {
                         className="inline-flex items-center gap-1 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
                       >
                         {hoveredPaper.doi}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  )}
+
+                  {hoveredPaper.arxiv_id && (
+                    <div>
+                      <div className="flex items-center gap-2 text-white/50 text-xs font-medium mb-1">
+                        <ExternalLink className="w-4 h-4" />
+                        <span>Full Text Download</span>
+                      </div>
+                      <a
+                        href={`https://arxiv.org/pdf/${hoveredPaper.arxiv_id}.pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                      >
+                        {hoveredPaper.arxiv_id}.pdf
                         <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>

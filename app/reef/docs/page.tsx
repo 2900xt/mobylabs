@@ -1,3 +1,5 @@
+//TODO: Refactor into proper updatable documentation system later
+
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
