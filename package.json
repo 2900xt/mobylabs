@@ -6,6 +6,7 @@
     "start": "next start",
     "lint": "eslint .",
     "upload-arxiv": "ts-node scripts/upload_arxiv.ts",
+    "fetch-arxiv": "ts-node scripts/fetch_arxiv.ts",
     "test-embedding": "ts-node scripts/test_embedding.ts"
   },
   "dependencies": {

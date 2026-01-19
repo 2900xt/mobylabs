@@ -95,6 +95,11 @@ export default function DocsPage() {
             </InfoCard>
           </div>
 
+          {/* Error Codes */}
+          <div ref={(el) => { sectionRefs.current["error-codes"] = el; }}>
+            <ErrorCodes errors={commonErrors} />
+          </div>
+
           {/* Reef API Section Header */}
           <div className="mt-6 mb-3">
             <h2 className="text-sm font-semibold text-white/80 uppercase tracking-wider">
@@ -160,11 +165,6 @@ export default function DocsPage() {
               copiedEndpoint={copiedEndpoint}
               onCopy={copyToClipboard}
             />
-          </div>
-
-          {/* Error Codes */}
-          <div ref={(el) => { sectionRefs.current["error-codes"] = el; }}>
-            <ErrorCodes errors={commonErrors} />
           </div>
         </div>
       </div>
