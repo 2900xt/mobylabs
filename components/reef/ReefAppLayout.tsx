@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
-import Sidebar from "./ReefSidebar";
 
 export default function ReefAppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -71,7 +70,7 @@ export default function ReefAppLayout({ children }: { children: React.ReactNode 
   // Show loading while checking whitelist status
   if (authLoading || profileLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center pt-11">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
       </div>
     );
@@ -80,7 +79,7 @@ export default function ReefAppLayout({ children }: { children: React.ReactNode 
   // Show "releasing soon" message if user is not whitelisted
   if (isWhitelisted === false) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 pt-11">
         {/* Background effects */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[150px]" />
@@ -111,9 +110,8 @@ export default function ReefAppLayout({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
-      <Sidebar />
-      <div className="flex-1 ml-64">
+    <div className="flex min-h-screen bg-slate-950 pt-11">
+      <div className="flex-1">
         {children}
       </div>
     </div>

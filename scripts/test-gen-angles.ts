@@ -1,20 +1,20 @@
 // Simple tester script for the gen-angles API
 // Run with: npx ts-node scripts/test-gen-angles.ts
 //
-// This script first calls /extract-claims to get paper analyses,
-// then passes them to /gen-angles to generate research angles.
+// This script:
+// 1. Calls /api/reef/papers/new to search for relevant papers based on the research idea
+// 2. Calls /api/reef/search/[id] to get the matching arXiv paper IDs
+// 3. Calls /extract-claims to get paper analyses
+// 4. Passes them to /gen-angles to generate research angles
 
 (async () => {
+  const REEF_PAPERS_NEW_URL = "http://localhost:3000/api/reef/papers/new";
+  const REEF_SEARCH_URL = "http://localhost:3000/api/reef/search";
   const EXTRACT_CLAIMS_URL = "http://localhost:3000/api/pearl/extract-claims";
   const GEN_ANGLES_URL = "http://localhost:3000/api/pearl/gen-angles";
 
   // Replace with a valid userId from your database
   const USER_ID = "2b76f673-7b00-4205-9520-b665b6f66be2";
-
-  // Example arxiv IDs to analyze
-  const ARXIV_IDS = [
-    "2501.13073", // Replace with relevant paper IDs
-  ];
 
   // Example research idea
   const RESEARCH_IDEA = `
@@ -44,11 +44,72 @@ about how these models handle context from large codebases and maintain consiste
     relatedLimitations: string[];
   }
 
-  console.log("=== Step 1: Extract claims from papers ===\n");
-  console.log("ArXiv IDs:", ARXIV_IDS);
+  console.log("=== Step 1: Search for relevant papers ===\n");
+  console.log("Research Idea:");
+  console.log(`  "${RESEARCH_IDEA.slice(0, 100)}..."\n`);
   console.log("---\n");
 
-  // First, call extract-claims to get paper analyses
+  // First, create a search to find relevant papers
+  let arxivIds: string[] = [];
+
+  try {
+    // Step 1a: Create a new search with the research idea
+    const newSearchResponse = await fetch(REEF_PAPERS_NEW_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: USER_ID,
+        abstract: RESEARCH_IDEA,
+      }),
+    });
+
+    console.log("Create search status:", newSearchResponse.status);
+
+    const newSearchData = await newSearchResponse.json();
+
+    if (!newSearchResponse.ok) {
+      console.error("Create search error:", newSearchData.error);
+      return;
+    }
+
+    const searchId = newSearchData.searchId;
+    console.log(`Created search with ID: ${searchId}\n`);
+
+    // Step 1b: Fetch the search results to get matching papers
+    const searchResultsResponse = await fetch(`${REEF_SEARCH_URL}/${searchId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: USER_ID,
+      }),
+    });
+
+    console.log("Fetch search results status:", searchResultsResponse.status);
+
+    const searchResultsData = await searchResultsResponse.json();
+
+    if (!searchResultsResponse.ok) {
+      console.error("Fetch search results error:", searchResultsData.error);
+      return;
+    }
+
+    // Extract arXiv IDs from the search results (limit to top 5 for testing)
+    arxivIds = searchResultsData.papers
+      .slice(0, 5)
+      .map((paper: { arxiv_id: string }) => paper.arxiv_id);
+
+    console.log(`Found ${searchResultsData.papers.length} relevant papers`);
+    console.log(`Using top ${arxivIds.length} papers: ${arxivIds.join(", ")}\n`);
+  } catch (error) {
+    console.error("Search request failed:", error);
+    return;
+  }
+
+  console.log("=== Step 2: Extract claims from papers ===\n");
+  console.log("ArXiv IDs:", arxivIds);
+  console.log("---\n");
+
+  // Call extract-claims to get paper analyses
   let papers: PaperAnalysis[] = [];
 
   try {
@@ -56,7 +117,7 @@ about how these models handle context from large codebases and maintain consiste
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        arxiv_ids: ARXIV_IDS,
+        arxiv_ids: arxivIds,
         userId: USER_ID,
       }),
     });
@@ -85,7 +146,7 @@ about how these models handle context from large codebases and maintain consiste
     return;
   }
 
-  console.log("\n=== Step 2: Generate research angles ===\n");
+  console.log("\n=== Step 3: Generate research angles ===\n");
   console.log("Research Idea:");
   console.log(`  "${RESEARCH_IDEA.slice(0, 100)}..."\n`);
   console.log("---\n");

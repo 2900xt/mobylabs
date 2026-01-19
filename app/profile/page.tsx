@@ -144,7 +144,7 @@ export default function ProfilePage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center pt-11">
         <Loader2 className="w-6 h-6 animate-spin text-cyan-500" />
       </div>
     );
@@ -156,7 +156,7 @@ export default function ProfilePage() {
   const avatarUrl = metadata.avatar_url || metadata.picture;
 
   return (
-    <div className="min-h-screen bg-slate-950 pt-16 px-4">
+    <div className="min-h-screen bg-slate-950 pt-11 px-4">
       {/* Background effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/3 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[120px]" />

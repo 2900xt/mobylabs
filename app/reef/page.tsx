@@ -115,12 +115,12 @@ export default function Home() {
   if (!user) return "sign in pls";
 
   return (
-    <div className="relative flex flex-col h-screen bg-slate-950 overflow-hidden">
+    <div className="relative flex flex-col h-[calc(100vh-2.75rem)] bg-slate-950 overflow-hidden">
       {/* Scrolling abstracts background */}
       <ScrollingAbstractsBackground />
 
       {/* Main Content */}
-      <div className="relative z-10 flex-1 overflow-y-auto">
+      <div className="relative z-10 flex-1 flex overflow-y-auto">
         <PreSearchView
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}

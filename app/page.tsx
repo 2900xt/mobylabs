@@ -4,16 +4,8 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="relative flex flex-col h-screen bg-slate-950 overflow-hidden">
+    <div className="relative flex flex-col h-screen bg-slate-950 overflow-hidden pt-11">
       <ScrollingAbstractsBackground />
-
-      {/* API Docs link */}
-      <Link
-        href="/docs"
-        className="absolute top-4 right-4 z-20 px-4 py-2 text-sm text-white/70 hover:text-white transition-colors"
-      >
-        API Docs
-      </Link>
 
       {/* Hero content */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">

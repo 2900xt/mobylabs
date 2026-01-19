@@ -29,7 +29,7 @@ export default function PreSearchView({
   error,
 }: PreSearchViewProps) {
   return (
-    <div className="flex flex-col items-center justify-center h-full px-4">
+    <div className="flex-1 flex flex-col items-center justify-center px-4">
       <div className="text-center mb-4">
         {/* Logo and Brand */}
         <div className="flex items-center justify-center gap-2 mb-6">

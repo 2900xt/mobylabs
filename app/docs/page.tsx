@@ -56,7 +56,7 @@ export default function DocsPage() {
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
   return (
-    <div className="flex">
+    <div className="flex pt-11">
       <DocsSidebar
         sections={docSections}
         activeSection={activeSection}
