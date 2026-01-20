@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
     // Check user profile and permissions
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("whitelisted")
+      .select("whitelisted, credits_remaining")
       .eq("id", userId)
       .single();
 
@@ -210,6 +210,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Forbidden: User is not whitelisted" },
         { status: 403 }
+      );
+    }
+
+    // Free for public use - no credit deduction
+    if (profile.credits_remaining <= 0) {
+      return NextResponse.json(
+        { error: 'Insufficient credits' },
+        { status: 402 }
+      );
+    }
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ credits_remaining: profile.credits_remaining - 10 })
+      .eq('id', userId);
+
+    if (updateError) {
+      console.error('Error updating credits:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update credits' },
+        { status: 402 }
       );
     }
 

@@ -136,6 +136,7 @@ export default function PearlPage() {
       setResults({
         angles: anglesData.angles,
         analyzedPapers: anglesData.analyzedPapers,
+        searchId,
       });
       setCurrentStep("complete");
     } catch (err) {

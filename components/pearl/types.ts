@@ -29,4 +29,5 @@ export interface ProgressState {
 export interface ResultsState {
   angles: ResearchAngle[];
   analyzedPapers: number;
+  searchId: string;
 }
