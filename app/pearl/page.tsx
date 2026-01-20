@@ -154,6 +154,14 @@ export default function PearlPage() {
     setProgress({ papersFound: 0, papersProcessed: 0, totalPapers: 0 });
   };
 
+  const startWithNewIdea = (newIdea: string) => {
+    setCurrentStep("idle");
+    setResults(null);
+    setError(null);
+    setResearchIdea(newIdea);
+    setProgress({ papersFound: 0, papersProcessed: 0, totalPapers: 0 });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -194,7 +202,13 @@ export default function PearlPage() {
 
           {/* Results Section */}
           {currentStep === "complete" && results && (
-            <ResultsSection results={results} onReset={resetForm} />
+            <ResultsSection
+              results={results}
+              onReset={resetForm}
+              userId={user!.id}
+              userIdea={researchIdea}
+              onIterate={startWithNewIdea}
+            />
           )}
         </div>
       </div>

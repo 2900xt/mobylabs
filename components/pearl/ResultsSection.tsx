@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Sparkles, Lightbulb, Rocket, Zap, ChevronRight, ExternalLink } from "lucide-react";
+import { Sparkles, Lightbulb, Rocket, Zap, ChevronRight, ExternalLink, Copy, FileText, RefreshCw, Check, Loader2 } from "lucide-react";
 import { ResultsState, ResearchAngle } from "./types";
 
 interface ResultsSectionProps {
   results: ResultsState;
   onReset: () => void;
+  userId: string;
+  userIdea: string;
+  onIterate: (newIdea: string) => void;
 }
 
 function ScoreBar({ label, value, color }: { label: string; value: number; color: string }) {
@@ -40,9 +43,9 @@ function AngleDetailPanel({ angle }: { angle: ResearchAngle }) {
 
       {/* Scores - compact */}
       <div className="space-y-2 py-3 border-y border-white/5">
-        <ScoreBar label="Novelty" value={angle.novelty} color="bg-purple-500" />
-        <ScoreBar label="Practicality" value={angle.practicality} color="bg-blue-500" />
-        <ScoreBar label="Impact" value={angle.impact} color="bg-green-500" />
+        <ScoreBar label="Novelty" value={angle.novelty} color="bg-yellow-500" />
+        <ScoreBar label="Practicality" value={angle.practicality} color="bg-yellow-500" />
+        <ScoreBar label="Impact" value={angle.impact} color="bg-yellow-500" />
       </div>
 
       {/* Reasoning */}
@@ -93,10 +96,233 @@ function AngleDetailPanel({ angle }: { angle: ResearchAngle }) {
   );
 }
 
-export default function ResultsSection({ results, onReset }: ResultsSectionProps) {
+interface ActionButtonsProps {
+  selectedAngle: ResearchAngle | null;
+  exportPlanStatus: ActionStatus;
+  exportAbstractStatus: ActionStatus;
+  iterateStatus: ActionStatus;
+  onExportPlan: () => void;
+  onExportAbstract: () => void;
+  onIterate: () => void;
+}
+
+function ActionButtons({
+  selectedAngle,
+  exportPlanStatus,
+  exportAbstractStatus,
+  iterateStatus,
+  onExportPlan,
+  onExportAbstract,
+  onIterate,
+}: ActionButtonsProps) {
+  if (!selectedAngle) return null;
+
+  return (
+    <div className="flex items-center gap-2 pt-4 mt-4 border-t border-white/10">
+      <ActionButton
+        onClick={onExportPlan}
+        status={exportPlanStatus}
+        icon={<Copy className="w-4 h-4" />}
+        loadingIcon={<Loader2 className="w-4 h-4 animate-spin" />}
+        successIcon={<Check className="w-4 h-4" />}
+        label="Export Plan"
+        loadingLabel="Copying..."
+        successLabel="Copied!"
+      />
+      <ActionButton
+        onClick={onExportAbstract}
+        status={exportAbstractStatus}
+        icon={<FileText className="w-4 h-4" />}
+        loadingIcon={<Loader2 className="w-4 h-4 animate-spin" />}
+        successIcon={<Check className="w-4 h-4" />}
+        label="Export Abstract"
+        loadingLabel="Generating..."
+        successLabel="Copied!"
+      />
+      <ActionButton
+        onClick={onIterate}
+        status={iterateStatus}
+        icon={<RefreshCw className="w-4 h-4" />}
+        loadingIcon={<Loader2 className="w-4 h-4 animate-spin" />}
+        successIcon={<Check className="w-4 h-4" />}
+        label="Iterate"
+        loadingLabel="Generating..."
+        successLabel="Starting..."
+        variant="amber"
+      />
+    </div>
+  );
+}
+
+type ActionStatus = "idle" | "loading" | "success" | "error";
+
+interface ActionButtonProps {
+  onClick: () => void;
+  status: ActionStatus;
+  icon: React.ReactNode;
+  loadingIcon: React.ReactNode;
+  successIcon: React.ReactNode;
+  label: string;
+  loadingLabel: string;
+  successLabel: string;
+  variant?: "yellow" | "amber";
+}
+
+function ActionButton({
+  onClick,
+  status,
+  icon,
+  loadingIcon,
+  successIcon,
+  label,
+  loadingLabel,
+  successLabel,
+  variant = "yellow"
+}: ActionButtonProps) {
+  const isLoading = status === "loading";
+  const isSuccess = status === "success";
+
+  const baseStyles = variant === "amber"
+    ? "bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/30 text-amber-400"
+    : "bg-yellow-500/20 hover:bg-yellow-500/30 border-yellow-500/30 text-yellow-400";
+
+  const successStyles = "bg-green-500/20 border-green-500/30 text-green-400";
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={isLoading}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed ${
+        isSuccess ? successStyles : baseStyles
+      }`}
+    >
+      {isLoading ? (
+        <>
+          {loadingIcon}
+          {loadingLabel}
+        </>
+      ) : isSuccess ? (
+        <>
+          {successIcon}
+          {successLabel}
+        </>
+      ) : (
+        <>
+          {icon}
+          {label}
+        </>
+      )}
+    </button>
+  );
+}
+
+export default function ResultsSection({ results, onReset, userId, userIdea, onIterate }: ResultsSectionProps) {
   const [selectedAngle, setSelectedAngle] = useState<ResearchAngle | null>(
     results.angles.length > 0 ? results.angles[0] : null
   );
+  const [exportPlanStatus, setExportPlanStatus] = useState<ActionStatus>("idle");
+  const [exportAbstractStatus, setExportAbstractStatus] = useState<ActionStatus>("idle");
+  const [iterateStatus, setIterateStatus] = useState<ActionStatus>("idle");
+
+  const generateAbstract = async (angle: ResearchAngle): Promise<string | null> => {
+    const response = await fetch("/api/pearl/gen-abstract", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        selectedAngle: angle,
+        userIdea,
+      }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "Failed to generate abstract");
+    }
+
+    const data = await response.json();
+    return data.generated?.abstract || null;
+  };
+
+  const handleExportPlan = async () => {
+    if (!selectedAngle) return;
+
+    setExportPlanStatus("loading");
+    try {
+      const planText = `# ${selectedAngle.title}
+
+## Description
+${selectedAngle.description}
+
+## Scores
+- Novelty: ${selectedAngle.novelty}/10
+- Practicality: ${selectedAngle.practicality}/10
+- Impact: ${selectedAngle.impact}/10
+- Overall: ${selectedAngle.overallScore.toFixed(1)}/10
+
+## Reasoning
+${selectedAngle.reasoning}
+
+## Action Plan
+${selectedAngle.briefPlan.map((step, i) => `${i + 1}. ${step}`).join('\n')}
+
+## Addresses Limitations
+${selectedAngle.relatedLimitations.map(lim => `- ${lim}`).join('\n')}`;
+
+      await navigator.clipboard.writeText(planText);
+      setExportPlanStatus("success");
+      setTimeout(() => setExportPlanStatus("idle"), 2000);
+    } catch {
+      setExportPlanStatus("error");
+      setTimeout(() => setExportPlanStatus("idle"), 2000);
+    }
+  };
+
+  const handleExportAbstract = async () => {
+    if (!selectedAngle) return;
+
+    setExportAbstractStatus("loading");
+    try {
+      // Use ClipboardItem with a Promise - this allows async content while maintaining user activation
+      const clipboardItem = new ClipboardItem({
+        "text/plain": generateAbstract(selectedAngle).then((abstract) => {
+          if (!abstract) {
+            throw new Error("No abstract generated");
+          }
+          return new Blob([abstract], { type: "text/plain" });
+        }),
+      });
+
+      await navigator.clipboard.write([clipboardItem]);
+      setExportAbstractStatus("success");
+      setTimeout(() => setExportAbstractStatus("idle"), 2000);
+    } catch (err) {
+      console.error("Export abstract error:", err);
+      setExportAbstractStatus("error");
+      setTimeout(() => setExportAbstractStatus("idle"), 2000);
+    }
+  };
+
+  const handleIterate = async () => {
+    if (!selectedAngle) return;
+
+    setIterateStatus("loading");
+    try {
+      const abstract = await generateAbstract(selectedAngle);
+      if (abstract) {
+        setIterateStatus("success");
+        setTimeout(() => {
+          onIterate(abstract);
+        }, 500);
+      } else {
+        throw new Error("No abstract generated");
+      }
+    } catch (err) {
+      console.error("Iterate error:", err);
+      setIterateStatus("error");
+      setTimeout(() => setIterateStatus("idle"), 2000);
+    }
+  };
 
   return (
     <div className="w-full h-[calc(100vh-220px)] max-w-6xl opacity-0 animate-fade-in-up">
@@ -194,7 +420,18 @@ export default function ResultsSection({ results, onReset }: ResultsSectionProps
         <div className="flex-1 overflow-y-auto">
           <div className="p-5">
             {selectedAngle ? (
-              <AngleDetailPanel angle={selectedAngle} />
+              <>
+                <AngleDetailPanel angle={selectedAngle} />
+                <ActionButtons
+                  selectedAngle={selectedAngle}
+                  exportPlanStatus={exportPlanStatus}
+                  exportAbstractStatus={exportAbstractStatus}
+                  iterateStatus={iterateStatus}
+                  onExportPlan={handleExportPlan}
+                  onExportAbstract={handleExportAbstract}
+                  onIterate={handleIterate}
+                />
+              </>
             ) : (
               <div className="flex items-center justify-center h-full text-white/20 text-sm">
                 Select an angle

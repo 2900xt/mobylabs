@@ -55,9 +55,6 @@ export default function ProcessingProgress({
                     ? "opacity-100"
                     : "opacity-40"
                 }`}
-                style={{
-                  transform: isActive ? "translateX(4px)" : "translateX(0)",
-                }}
               >
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 ${
@@ -104,7 +101,7 @@ export default function ProcessingProgress({
                     isCompleted
                       ? "bg-green-500"
                       : isActive
-                      ? "bg-amber-500 animate-pulse shadow-lg shadow-amber-500/50"
+                      ? "bg-amber-500 animate-pulse-slow shadow-lg shadow-amber-500/50"
                       : "bg-white/10"
                   }`}
                 />
@@ -121,7 +118,7 @@ export default function ProcessingProgress({
               style={{ width: `${progressPercentage}%` }}
             >
               {/* Shimmer effect on progress bar */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer-slide" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer-slow" />
             </div>
           </div>
         </div>

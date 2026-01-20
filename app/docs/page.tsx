@@ -15,6 +15,7 @@ const docSections: DocSection[] = [
   { id: "search-id", title: "Get Results", tool: "Reef" },
   { id: "extract-claims", title: "Extract Claims", tool: "Pearl" },
   { id: "gen-angles", title: "Generate Angles", tool: "Pearl" },
+  { id: "gen-abstract", title: "Generate Abstract", tool: "Pearl" },
   { id: "error-codes", title: "Error Codes", tool: "General" },
 ];
 
@@ -43,7 +44,7 @@ export default function DocsPage() {
   const handleSectionClick = (id: string) => {
     setActiveSection(id);
     // If it's an endpoint, expand it
-    if (["papers-new", "search-id", "extract-claims", "gen-angles"].includes(id)) {
+    if (["papers-new", "search-id", "extract-claims", "gen-angles", "gen-abstract"].includes(id)) {
       setExpandedSection(id);
     }
     // Scroll to section
@@ -236,6 +237,38 @@ export default function DocsPage() {
               example={`curl -X POST ${baseUrl}/api/pearl/gen-angles \\
   -H "Content-Type: application/json" \\
   -d '{"userId": "${user?.id || "YOUR_API_KEY"}", "researchIdea": "...", "papers": [...]}'`}
+              expandedSection={expandedSection}
+              onToggle={handleToggle}
+              copiedEndpoint={copiedEndpoint}
+              onCopy={copyToClipboard}
+            />
+          </div>
+
+          {/* POST /api/pearl/gen-abstract */}
+          <div ref={(el) => { sectionRefs.current["gen-abstract"] = el; }}>
+            <ApiEndpoint
+              id="gen-abstract"
+              method="POST"
+              path="/api/pearl/gen-abstract"
+              description="Generate a research proposal abstract from a selected research angle. Costs 1 credit."
+              requestBody={[
+                { name: "userId", type: "string", description: "Your API key" },
+                { name: "selectedAngle", type: "ResearchAngle", description: "A research angle object from gen-angles output" },
+                { name: "userIdea", type: "string", description: "Your original research idea (min 20 chars)" },
+                { name: "additionalContext", type: "string?", description: "Optional additional context or requirements" },
+              ]}
+              response={[
+                {
+                  name: "generated",
+                  type: "",
+                  nested: "title, abstract, keywords[], contributions[]",
+                },
+                { name: "basedOnAngle", type: "string", nested: undefined },
+                { name: "userIdea", type: "string", nested: undefined },
+              ]}
+              example={`curl -X POST ${baseUrl}/api/pearl/gen-abstract \\
+  -H "Content-Type: application/json" \\
+  -d '{"userId": "${user?.id || "YOUR_API_KEY"}", "selectedAngle": {...}, "userIdea": "..."}'`}
               expandedSection={expandedSection}
               onToggle={handleToggle}
               copiedEndpoint={copiedEndpoint}
