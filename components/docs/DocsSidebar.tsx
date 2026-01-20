@@ -1,7 +1,4 @@
 "use client";
-
-import Image from "next/image";
-import Link from "next/link";
 import { Home, FileText } from "lucide-react";
 
 export interface DocSection {
@@ -33,15 +30,6 @@ export default function DocsSidebar({ sections, activeSection, onSectionClick }:
     <div className="fixed left-0 top-11 bottom-0 w-64 bg-slate-900 border-r border-white/10 flex flex-col">
       {/* Navigation Links */}
       <div className="px-3 pb-2">
-        <Link
-          href="/"
-          className="group flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-white/5 transition-colors"
-        >
-          <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
-            <Home className="w-3.5 h-3.5 text-white/70" />
-          </div>
-          <span className="text-sm text-white/70 group-hover:text-white/90">Home</span>
-        </Link>
       </div>
 
       {/* Sections Navigation */}
