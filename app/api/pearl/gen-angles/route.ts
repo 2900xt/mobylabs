@@ -213,8 +213,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Free for public use - no credit deduction
-    if (profile.credits_remaining <= 0) {
+    // 10 credits per use
+    if (profile.credits_remaining <= 10) {
       return NextResponse.json(
         { error: 'Insufficient credits' },
         { status: 402 }
