@@ -46,7 +46,7 @@ export default function PreSearchView({
       </div>
 
       {/* Centered search input */}
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-2xl opacity-0 animate-fade-in-up animation-delay-200">
         {error && (
           <div className="mb-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
             {error}

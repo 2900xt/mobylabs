@@ -3,13 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { User, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user, signOut } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -57,13 +58,19 @@ export default function Navbar() {
   if (isAuthPage) return null;
 
   const navLinks = [
-    { href: "/reef", label: "Reef" },
-    { href: "/pearl", label: "Pearl" },
-    { href: "/docs", label: "Docs" },
+    { href: "/?tool=reef", label: "Reef", tool: "reef" },
+    { href: "/?tool=pearl", label: "Pearl", tool: "pearl" },
+    { href: "/docs", label: "Docs", tool: null },
   ];
 
-  const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
+  const isActive = (href: string, tool: string | null) => {
+    if (tool) {
+      // For tool links, check if we're on home page with matching tool param
+      if (pathname === "/") {
+        return searchParams.get("tool") === tool;
+      }
+      return false;
+    }
     return pathname?.startsWith(href);
   };
 
@@ -79,7 +86,7 @@ export default function Navbar() {
         {/* Center - Nav Links */}
         <div className="flex items-center gap-6">
           {navLinks.map((link) => {
-            const active = isActive(link.href);
+            const active = isActive(link.href, link.tool);
             return (
               <Link
                 key={link.href}
