@@ -129,7 +129,7 @@ export default function Home() {
       }
 
       if (data.searchId) {
-        router.push(`/reef/search/${data.searchId}`);
+        window.location.href = `/reef/search/${data.searchId}`;
       }
     } catch (err) {
       setReefError("An error occurred while searching. Please try again.");

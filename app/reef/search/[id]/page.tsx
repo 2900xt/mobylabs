@@ -81,9 +81,7 @@ export default function SearchResultsPage() {
     };
   }, [isDragging]);
 
-  const fetchSearchResults = async (signal?: AbortSignal, retryCount = 0) => {
-    const MAX_RETRIES = 2;
-
+  const fetchSearchResults = async (signal?: AbortSignal) => {
     if (!user?.id) {
       setError("User not authenticated");
       setIsLoading(false);
@@ -118,17 +116,6 @@ export default function SearchResultsPage() {
       if (err instanceof Error && err.name === 'AbortError') {
         return;
       }
-
-      // Retry on network errors (common after navigation in production)
-      const isNetworkError = err instanceof TypeError &&
-        (err.message.includes('NetworkError') || err.message.includes('fetch'));
-
-      if (isNetworkError && retryCount < MAX_RETRIES) {
-        // Wait briefly before retrying
-        await new Promise(resolve => setTimeout(resolve, 100 * (retryCount + 1)));
-        return fetchSearchResults(signal, retryCount + 1);
-      }
-
       setError(err instanceof Error ? err.message : "An error occurred");
       console.error("Search results error:", err);
     } finally {
