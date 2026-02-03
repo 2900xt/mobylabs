@@ -27,6 +27,7 @@
     "pdf-parse": "^1.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "rss-parser": "^3.13.0",
     "stream-chain": "^3.4.0",
     "stream-json": "^1.9.1",
     "stripe": "^20.1.2",
