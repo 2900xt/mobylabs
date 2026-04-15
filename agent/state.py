@@ -128,6 +128,54 @@ class OverallAssessment(BaseModel):
     ] = "needs_major_revision"
 
 
+# ---------------------------------------------------------------------------
+# Execution models (Step 7 — Opera-style manager/agent execution)
+# ---------------------------------------------------------------------------
+
+
+class ExecutionStep(BaseModel):
+    """A single executable coding task, translated from a Pearl methodology phase."""
+    step_number: int
+    description: str
+    prompt: str                     # Detailed coding instructions for the worker
+    phase_name: str                 # Which Pearl methodology phase this came from
+    risk_level: Literal["low", "medium", "high"] = "medium"
+    model: str = "sonnet"
+    acceptance_criteria: str = ""
+    max_runtime_seconds: int = 1800
+    depends_on_previous: bool = True
+    expected_outputs: list[str] = []
+    tools: list[str] = []           # Python libraries/tools needed
+
+
+class ExecutionStepResult(BaseModel):
+    """Result of executing a single step via a worker container."""
+    step_number: int
+    status: Literal["completed", "failed"]
+    files_changed: int = 0
+    lines_added: int = 0
+    lines_removed: int = 0
+    cost_usd: float = 0.0
+    branch_name: str = ""
+    review_classification: Literal[
+        "merge_ready", "promising", "needs_human_input", "failed"
+    ] | None = None
+    review_confidence: float = 0.0
+    review_summary: str = ""
+    runtime_seconds: int = 0
+    log: str = ""
+
+
+class ExecutionPlan(BaseModel):
+    """Flat list of execution steps translated from a Pearl ResearchPlan."""
+    steps: list[ExecutionStep] = []
+    reasoning: str = ""
+    target_repo: str = ""           # owner/name
+    budget_cap_usd: float = 20.0
+    total_cost_usd: float = 0.0
+    plan_revisions: int = 0
+
+
 class PlanCritique(BaseModel):
     overall_assessment: OverallAssessment = OverallAssessment()
     section_critiques: list[CritiqueSection] = []
@@ -168,6 +216,13 @@ class PearlState:
 
     # Step 6 — critique
     critique: PlanCritique | None = None
+
+    # Step 7 — execution (Opera-style manager/agent)
+    execution_plan: ExecutionPlan | None = None
+    execution_results: list[ExecutionStepResult] = field(default_factory=list)
+    execution_status: str = "pending"  # pending | running | completed | failed | gated
+    target_repo: str = ""              # GitHub owner/name for execution output
+    execution_budget_usd: float = 20.0
 
     # Control
     error: str | None = None

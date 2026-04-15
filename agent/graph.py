@@ -12,6 +12,9 @@ from nodes import (
     generate_abstract,
     build_plan,
     critique_plan,
+    check_readiness,
+    translate_plan,
+    execute_plan,
 )
 
 
@@ -26,7 +29,9 @@ def build_graph() -> StateGraph:
         -> generate_abstract   (create proposal abstract for top angle)
         -> build_plan          (search for methodology papers, build full plan)
         -> critique_plan       (peer-review style critique)
-        -> END
+        -> check_readiness     (gate: only execute if ready and --execute flag set)
+           -> [execute] translate_plan -> execute_plan -> END
+           -> [skip] END
     """
     graph = StateGraph(PearlState)
 
@@ -37,15 +42,25 @@ def build_graph() -> StateGraph:
     graph.add_node("generate_abstract", generate_abstract)
     graph.add_node("build_plan", build_plan)
     graph.add_node("critique_plan", critique_plan)
+    graph.add_node("translate_plan", translate_plan)
+    graph.add_node("execute_plan", execute_plan)
 
-    # Linear pipeline edges
+    # Linear pipeline edges (steps 1-6)
     graph.add_edge(START, "search_papers")
     graph.add_edge("search_papers", "extract_claims")
     graph.add_edge("extract_claims", "generate_angles")
     graph.add_edge("generate_angles", "generate_abstract")
     graph.add_edge("generate_abstract", "build_plan")
     graph.add_edge("build_plan", "critique_plan")
-    graph.add_edge("critique_plan", END)
+
+    # Conditional execution path after critique
+    graph.add_conditional_edges(
+        "critique_plan",
+        check_readiness,
+        {"execute": "translate_plan", "skip": END},
+    )
+    graph.add_edge("translate_plan", "execute_plan")
+    graph.add_edge("execute_plan", END)
 
     return graph.compile()
 

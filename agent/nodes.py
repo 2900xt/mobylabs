@@ -22,6 +22,9 @@ from state import (
     MethodologyPhase,
     TimelineEntry,
     Challenge,
+    ExecutionStep,
+    ExecutionStepResult,
+    ExecutionPlan,
     PlanCritique,
     OverallAssessment,
     CritiqueSection,
@@ -746,4 +749,120 @@ def critique_plan(state: PearlState) -> PearlState:
     print(f"      Score: {state.critique.overall_assessment.score}/10")
     print(f"      Readiness: {state.critique.overall_assessment.readiness_level}")
     _save_step(state, "6_critique_plan", state.critique.model_dump())
+    return state
+
+
+# ===================================================================
+# Node 7a — Check readiness (conditional edge function)
+# ===================================================================
+
+
+def check_readiness(state: PearlState) -> str:
+    """Conditional edge: decide whether to execute or skip.
+
+    Returns "execute" if:
+      - target_repo is set (--execute flag was used)
+      - critique readiness is NOT needs_major_revision
+    Otherwise returns "skip".
+    """
+    # No target repo means --execute was not passed
+    if not state.target_repo:
+        return "skip"
+
+    # Check critique readiness
+    if state.critique:
+        level = state.critique.overall_assessment.readiness_level
+        if level == "needs_major_revision":
+            print("\n[7/8] Execution GATED — plan needs major revision.")
+            state.execution_status = "gated"
+            return "skip"
+        if level == "needs_minor_revision":
+            print("\n[7/8] Warning: plan needs minor revision, proceeding with execution anyway.")
+
+    return "execute"
+
+
+# ===================================================================
+# Node 7b — Translate research plan into execution steps
+# ===================================================================
+
+
+def translate_plan(state: PearlState) -> PearlState:
+    """Translate the ResearchPlan into a flat ExecutionPlan."""
+    state.current_step = "translating"
+    plan = state.research_plan
+    if not plan:
+        print("\n[7/8] Skipping translation — no research plan available.")
+        return state
+
+    print(f"\n[7/8] Translating research plan into execution steps...")
+
+    from plan_translator import translate_plan as do_translate
+
+    execution_plan = do_translate(
+        research_plan=plan,
+        research_idea=state.research_idea,
+        target_repo=state.target_repo,
+        budget_cap_usd=state.execution_budget_usd,
+    )
+
+    state.execution_plan = execution_plan
+    print(f"      Generated {len(execution_plan.steps)} execution steps.")
+    for step in execution_plan.steps:
+        print(f"      Step {step.step_number}: {step.description} [{step.risk_level}]")
+
+    _save_step(state, "7_translate_plan", {
+        "reasoning": execution_plan.reasoning,
+        "steps": [s.model_dump() for s in execution_plan.steps],
+    })
+    return state
+
+
+# ===================================================================
+# Node 8 — Execute the plan via worker containers
+# ===================================================================
+
+
+def execute_plan(state: PearlState) -> PearlState:
+    """Execute the plan step-by-step using Docker worker containers."""
+    state.current_step = "executing"
+    ep = state.execution_plan
+    if not ep or not ep.steps:
+        print("\n[8/8] Skipping execution — no execution plan available.")
+        return state
+
+    print(f"\n[8/8] Executing research plan ({len(ep.steps)} steps, ${ep.budget_cap_usd:.2f} budget)...")
+    state.execution_status = "running"
+
+    from executor import execute_plan as do_execute
+
+    results, total_cost, revisions = do_execute(
+        plan=ep,
+        research_plan_title=state.research_plan.title if state.research_plan else "",
+        research_idea=state.research_idea,
+    )
+
+    state.execution_results = results
+    ep.total_cost_usd = total_cost
+    ep.plan_revisions = revisions
+
+    # Determine overall status
+    completed = sum(1 for r in results if r.status == "completed")
+    failed = sum(1 for r in results if r.status == "failed")
+    if failed == 0 and completed > 0:
+        state.execution_status = "completed"
+    elif completed > 0:
+        state.execution_status = "completed"  # partial success
+    else:
+        state.execution_status = "failed"
+
+    print(f"\n      Execution finished: {completed} completed, {failed} failed")
+    print(f"      Total cost: ${total_cost:.2f}")
+
+    _save_step(state, "8_execute_plan", {
+        "status": state.execution_status,
+        "total_cost_usd": total_cost,
+        "plan_revisions": revisions,
+        "results": [r.model_dump() for r in results],
+    })
     return state

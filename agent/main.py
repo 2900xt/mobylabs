@@ -119,6 +119,21 @@ def print_results(state: PearlState) -> None:
             for q in crit.questions_to_consider:
                 print(f"    - {q}")
 
+    # Execution results
+    if state.execution_plan and state.execution_results:
+        print(f"\n{_hr('-')}")
+        print("  EXECUTION RESULTS")
+        print(_hr("-"))
+        print(f"\n  Status: {state.execution_status}")
+        print(f"  Total Cost: ${state.execution_plan.total_cost_usd:.2f}")
+        print(f"  Plan Revisions: {state.execution_plan.plan_revisions}")
+        print(f"\n  Steps:")
+        for r in state.execution_results:
+            review = f" [{r.review_classification}]" if r.review_classification else ""
+            print(f"    Step {r.step_number}: {r.status} — {r.files_changed} files changed, ${r.cost_usd:.3f}{review}")
+            if r.review_summary:
+                print(f"      Review: {r.review_summary}")
+
     print(f"\n{_hr()}")
 
 
@@ -133,6 +148,9 @@ def export_json(state: PearlState, path: str) -> None:
         "research_plan": state.research_plan.model_dump() if state.research_plan else None,
         "methodology_inspirations": [m.model_dump() for m in state.methodology_inspirations],
         "critique": state.critique.model_dump() if state.critique else None,
+        "execution_plan": state.execution_plan.model_dump() if state.execution_plan else None,
+        "execution_results": [r.model_dump() for r in state.execution_results],
+        "execution_status": state.execution_status,
     }
     with open(path, "w") as f:
         json.dump(output, f, indent=2)
@@ -150,6 +168,9 @@ def main() -> None:
     parser.add_argument("--angle-index", type=int, default=0, help="Which angle to develop (0 = top, default)")
     parser.add_argument("--export", type=str, default=None, help="Export results to JSON file")
     parser.add_argument("--output-dir", type=str, default=None, help="Directory for per-step output files (default: output/<timestamp>)")
+    parser.add_argument("--execute", action="store_true", help="Execute the research plan via worker containers after critique")
+    parser.add_argument("--target-repo", type=str, default="", help="GitHub repo (owner/name) for execution output")
+    parser.add_argument("--budget", type=float, default=20.0, help="Execution budget in USD (default: $20)")
     args = parser.parse_args()
 
     idea = args.idea
@@ -168,10 +189,17 @@ def main() -> None:
     os.makedirs(output_dir, exist_ok=True)
     print(f"Step outputs will be saved to: {output_dir}\n")
 
+    # Validate execution flags
+    if args.execute and not args.target_repo:
+        print("Error: --execute requires --target-repo (e.g., --target-repo user/repo)")
+        sys.exit(1)
+
     initial_state = PearlState(
         research_idea=idea,
         selected_angle_index=args.angle_index,
         output_dir=output_dir,
+        target_repo=args.target_repo if args.execute else "",
+        execution_budget_usd=args.budget,
     )
 
     print(f"\nRunning Pearl research pipeline for:\n  \"{idea}\"\n")
