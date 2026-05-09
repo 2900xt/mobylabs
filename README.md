@@ -1,9 +1,31 @@
-Mobylabs is trying to get full research automation with AI agents
+# Moby Research TUI
 
-# tools
-reef: an abstract search tool
-pearl: novel idea generator
+An empty terminal UI shell for a future human-in-the-loop research agent.
 
-# next steps
-add better documentaion system
-parse 200,000 million abstracts
+The current version intentionally has no LangGraph backend, arXiv scanning, LLM calls, notebooks, or research workflow logic. It is just the terminal interface scaffold.
+
+## Install
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+## Run
+
+```bash
+moby
+```
+
+Optional title:
+
+```bash
+moby --title "Moby Research"
+```
+
+Inside the TUI:
+
+- Type into the input bar and press Enter.
+- Press `Ctrl-Q` to quit.
+
