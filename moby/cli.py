@@ -1,4 +1,4 @@
-"""Entrypoint for the Moby terminal UI."""
+"""Entrypoint for the MobyLabs terminal UI."""
 
 from __future__ import annotations
 
@@ -10,11 +10,11 @@ from .tui import run_tui
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="moby",
-        description="Empty TUI shell for a future research agent.",
+        description="Chat-first terminal UI for MobyLabs.",
     )
     parser.add_argument(
         "--title",
-        default="Moby",
+        default="MobyLabs",
         help="Title shown in the TUI header.",
     )
     args = parser.parse_args()
@@ -23,4 +23,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

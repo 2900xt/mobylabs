@@ -1,8 +1,8 @@
-# Moby Research TUI
+# MobyLabs TUI
 
-An empty terminal UI shell for a future human-in-the-loop research agent.
+Chat-first terminal UI scaffold for a future human-in-the-loop research agent.
 
-The current version intentionally has no LangGraph backend, arXiv scanning, LLM calls, notebooks, or research workflow logic. It is just the terminal interface scaffold.
+The current version intentionally has no LangGraph backend, arXiv scanning, LLM calls, notebooks, or research workflow logic. It is just the terminal interface scaffold: a single chat surface plus slash commands.
 
 ## Install
 
@@ -26,6 +26,7 @@ moby --title "Moby Research"
 
 Inside the TUI:
 
-- Type into the input bar and press Enter.
-- Press `Ctrl-Q` to quit.
-
+- Type into the input box and press Enter.
+- Use slash commands: `/plan`, `/chat`, `/clear`, `/status`, `/help`, `/quit`.
+- Scroll the transcript with Up/Down or Page Up/Page Down.
+- Press `Ctrl-Q` or `Ctrl-C` to quit.
