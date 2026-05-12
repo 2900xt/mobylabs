@@ -10,6 +10,9 @@ from __future__ import annotations
 import curses
 import textwrap
 from dataclasses import dataclass, field
+from pathlib import Path
+
+from .storage import WorkspaceStore
 
 
 @dataclass(frozen=True)
@@ -28,16 +31,21 @@ class RenderLine:
 @dataclass
 class TuiState:
     title: str
+    store: WorkspaceStore
     input_text: str = ""
     cursor: int = 0
     messages: list[ChatMessage] = field(default_factory=list)
     status: str = "Ready"
     mode: str = "Chat"
     scroll_from_bottom: int = 0
+    active_program_id: str | None = None
 
 
-def run_tui(title: str = "MobyLabs") -> None:
-    curses.wrapper(lambda stdscr: _main(stdscr, TuiState(title=title)))
+def run_tui(title: str = "MobyLabs", workspace_path: str | Path = ".") -> None:
+    store = WorkspaceStore(workspace_path)
+    state = TuiState(title=title, store=store)
+    _load_initial_state(state)
+    curses.wrapper(lambda stdscr: _main(stdscr, state))
 
 
 def _main(stdscr: curses.window, state: TuiState) -> None:
@@ -157,17 +165,33 @@ def _handle_command(state: TuiState, submitted: str) -> bool:
         state.messages.append(ChatMessage("system", "Chat mode active."))
         return True
     if command == "/status":
-        state.messages.append(ChatMessage("system", f"Mode: {state.mode}. Status: {state.status}."))
+        program = _program_label(state)
+        state.messages.append(ChatMessage("system", f"Mode: {state.mode}. Program: {program}. Status: {state.status}."))
         state.status = "Status shown"
         return True
     if command == "/help":
         state.messages.append(
             ChatMessage(
                 "system",
-                "Commands: /plan, /chat, /clear, /status, /help, /quit. Type normally to send a chat message.",
+                "Commands: /profile, /program new, /program open, /graph, /notes, /decisions, /plan, /chat, /clear, /status, /help, /quit.",
             )
         )
         state.status = "Help shown"
+        return True
+    if command == "/profile":
+        _handle_profile_command(state, arg.strip())
+        return True
+    if command == "/program":
+        _handle_program_command(state, arg.strip())
+        return True
+    if command == "/graph":
+        _handle_graph_command(state)
+        return True
+    if command == "/notes":
+        _handle_notes_command(state, arg.strip())
+        return True
+    if command == "/decisions":
+        _handle_decisions_command(state, arg.strip())
         return True
 
     detail = f"Unknown command: {command}"
@@ -176,6 +200,164 @@ def _handle_command(state: TuiState, submitted: str) -> bool:
     state.messages.append(ChatMessage("system", f"{detail}. Try /help."))
     state.status = "Unknown command"
     return True
+
+
+def _load_initial_state(state: TuiState) -> None:
+    state.store.initialize()
+    with state.store.uow() as uow:
+        programs = uow.programs.list()
+    if programs:
+        state.active_program_id = programs[-1].id
+
+
+def _handle_profile_command(state: TuiState, arg: str) -> None:
+    with state.store.uow() as uow:
+        if arg:
+            profile = uow.profiles.create(arg)
+            state.messages.append(ChatMessage("system", f"Created profile {profile.display_name} ({profile.id})."))
+            state.status = "Profile created"
+            return
+
+        profiles = uow.profiles.list()
+    if not profiles:
+        state.messages.append(ChatMessage("system", "No profiles yet. Use /profile Your Name."))
+    else:
+        body = "\n".join(f"{profile.id}: {profile.display_name}" for profile in profiles)
+        state.messages.append(ChatMessage("system", body))
+    state.status = "Profiles shown"
+
+
+def _handle_program_command(state: TuiState, arg: str) -> None:
+    action, _, detail = arg.partition(" ")
+    action = action.lower()
+    if action == "new" and detail.strip():
+        _create_program(state, detail.strip())
+        return
+    if action == "open" and detail.strip():
+        _open_program(state, detail.strip())
+        return
+    if action in ("", "list"):
+        _list_programs(state)
+        return
+
+    state.messages.append(ChatMessage("system", "Usage: /program new Title, /program open program_id, or /program list."))
+    state.status = "Program help"
+
+
+def _create_program(state: TuiState, title: str) -> None:
+    with state.store.uow() as uow:
+        profiles = uow.profiles.list(limit=1)
+        profile_id = profiles[0].id if profiles else None
+        program = uow.programs.create(
+            title,
+            profile_id=profile_id,
+            workspace_path=str(state.store.workspace_path),
+        )
+    state.active_program_id = program.id
+    state.messages.append(ChatMessage("system", f"Created and opened program {program.title} ({program.id})."))
+    state.status = "Program created"
+
+
+def _open_program(state: TuiState, program_id: str) -> None:
+    with state.store.uow() as uow:
+        program = uow.programs.get(program_id)
+    if program is None:
+        state.messages.append(ChatMessage("system", f"No program found for {program_id}."))
+        state.status = "Program not found"
+        return
+    state.active_program_id = program.id
+    state.messages.append(ChatMessage("system", f"Opened program {program.title} ({program.id})."))
+    state.status = "Program opened"
+
+
+def _list_programs(state: TuiState) -> None:
+    with state.store.uow() as uow:
+        programs = uow.programs.list()
+    if not programs:
+        state.messages.append(ChatMessage("system", "No programs yet. Use /program new Title."))
+    else:
+        lines = []
+        for program in programs:
+            marker = "*" if program.id == state.active_program_id else " "
+            lines.append(f"{marker} {program.id}: {program.title} [{program.status}]")
+        state.messages.append(ChatMessage("system", "\n".join(lines)))
+    state.status = "Programs shown"
+
+
+def _handle_graph_command(state: TuiState) -> None:
+    with state.store.uow() as uow:
+        summary = uow.graph.summary(state.active_program_id)
+    count_lines = [
+        f"{key}: {value}"
+        for key, value in summary.items()
+        if key != "recent_notes"
+    ]
+    notes = summary["recent_notes"]
+    if notes:
+        count_lines.append("recent notes:")
+        count_lines.extend(f"- {note['content']}" for note in notes)
+    state.messages.append(ChatMessage("system", "\n".join(count_lines)))
+    state.status = "Graph shown"
+
+
+def _handle_notes_command(state: TuiState, arg: str) -> None:
+    if not state.active_program_id:
+        state.messages.append(ChatMessage("system", "Open a program first with /program new Title or /program open program_id."))
+        state.status = "No program"
+        return
+    with state.store.uow() as uow:
+        if arg:
+            note = uow.notes.create(state.active_program_id, arg)
+            uow.programs.touch(state.active_program_id)
+            state.messages.append(ChatMessage("system", f"Saved note {note.id}."))
+            state.status = "Note saved"
+            return
+        notes = uow.notes.list(program_id=state.active_program_id, limit=10)
+    if not notes:
+        state.messages.append(ChatMessage("system", "No notes yet. Use /notes Your note text."))
+    else:
+        state.messages.append(ChatMessage("system", "\n".join(f"{note.created_at}: {note.content}" for note in notes)))
+    state.status = "Notes shown"
+
+
+def _handle_decisions_command(state: TuiState, arg: str) -> None:
+    if not state.active_program_id:
+        state.messages.append(ChatMessage("system", "Open a program first with /program new Title or /program open program_id."))
+        state.status = "No program"
+        return
+    with state.store.uow() as uow:
+        if arg:
+            checkpoint, decision, rationale = _parse_decision_arg(arg)
+            record = uow.decisions.create(state.active_program_id, checkpoint, decision, rationale)
+            uow.programs.touch(state.active_program_id)
+            state.messages.append(ChatMessage("system", f"Saved decision {record.id}."))
+            state.status = "Decision saved"
+            return
+        decisions = uow.decisions.list(program_id=state.active_program_id, limit=10)
+    if not decisions:
+        state.messages.append(ChatMessage("system", "No decisions yet. Use /decisions checkpoint | decision | rationale."))
+    else:
+        lines = [f"{item.created_at}: {item.checkpoint_id} -> {item.decision}" for item in decisions]
+        state.messages.append(ChatMessage("system", "\n".join(lines)))
+    state.status = "Decisions shown"
+
+
+def _parse_decision_arg(arg: str) -> tuple[str, str, str]:
+    parts = [part.strip() for part in arg.split("|", 2)]
+    while len(parts) < 3:
+        parts.append("")
+    checkpoint, decision, rationale = parts
+    return checkpoint or "manual", decision or arg, rationale
+
+
+def _program_label(state: TuiState) -> str:
+    if not state.active_program_id:
+        return "none"
+    with state.store.uow() as uow:
+        program = uow.programs.get(state.active_program_id)
+    if program is None:
+        return "missing"
+    return f"{program.title} ({program.id})"
 
 
 def _draw(stdscr: curses.window, state: TuiState) -> None:
@@ -204,10 +386,11 @@ def _draw_header(stdscr: curses.window, state: TuiState, width: int) -> None:
     title = f" {state.title} "
     _addstr(stdscr, 0, 1, title, _attr("title"))
 
-    right = f"{state.mode} | {state.status} | Ctrl-C/Q"
+    program = state.active_program_id[:16] if state.active_program_id else "no program"
+    right = f"{state.mode} | {program} | {state.status} | Ctrl-C/Q"
     _addstr(stdscr, 0, max(1, width - len(right) - 1), right[: max(0, width - 2)], _attr("muted"))
 
-    hint = "Type a message. Commands: /plan /chat /clear /help"
+    hint = "Type a message. Commands: /profile /program /graph /notes /decisions /help"
     _addstr(stdscr, 1, 2, hint[: max(0, width - 4)], _attr("muted"))
     _hline(stdscr, 2, 0, width, curses.ACS_HLINE, _attr("border"))
 
@@ -243,7 +426,7 @@ def _draw_chat(stdscr: curses.window, state: TuiState, y: int, height: int, widt
 def _draw_empty_state(stdscr: curses.window, y: int, height: int, width: int) -> None:
     lines = [
         "MobyLabs is ready.",
-        "Start typing to chat, or use /plan to switch modes.",
+        "Create a profile with /profile, then a program with /program new.",
     ]
     start_y = y + max(0, height // 2 - 1)
     for offset, line in enumerate(lines):
